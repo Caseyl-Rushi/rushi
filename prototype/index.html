@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <title>如是</title>
+    <style>
+        body{
+            margin: 0;
+            height: 100vh;
+            background: linear-gradient(#c8d6e5,#f5e6d3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: "SimSin","宋体",serif;
+        }
+
+        .balcony{
+            text-align: center;
+            color: #3d3d3d;
+        }
+
+        .balcony h1{
+            font-size: 2rem;
+            font-weight: normal;
+            margin-bottom: 0.5rem;
+        }
+
+        .balcony p{
+            font-size: 1rem;
+            color:#7a7a7a;
+            margin:0.5rem;
+        }
+
+        .countdown{
+            font-size: 0.9rem;
+            color: :b8860B;
+            margin-top:2rem;
+            letter-spacing:2px;
+        }
+        .notebook {
+            osition: absolute;
+            right: 3rem;
+            bottom: 3rem;
+            width: 220px;
+            background: #faf5eb;
+            border: 1px solid #d4c5b2;
+            padding: 1.2rem;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+            transform: rotate(-2deg);
+        }
+
+    .day-label {
+      font-size: 0.8rem;
+      color: #b8860b;
+      border-bottom: 1px solid #d4c5b2;
+      padding-bottom: 0.3rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .entry {
+      font-size: 0.75rem;
+      color: #5a5a5a;
+      line-height: 1.8;
+      margin: 0;
+    }
+
+    .notebook:hover {
+      transform: rotate(0deg) scale(1.02);
+      box-shadow: 3px 3px 14px rgba(0,0,0,0.15);
+      transition: all 0.3s ease;
+    }
+
+    .notebook {
+      transition: all 0.3s ease;
+    }
+    </style>
+</head>
+<body>
+    <div class="balcony">
+        <h1>你站在阳台上</h1>
+        <p>远处是云海。云缝里漏出地面都市的暖黄灯光。</p>
+        <p>阳台栏杆上的屏幕安静地亮着</p>
+        <div class="countdown">109,575天</div>
+    </div>
+      <div class="notebook">
+    <div class="notebook-page">
+      <p class="day-label">今日</p>
+      <p class="entry">悬赏"西侧空地规划"投票开始</p>
+      <p class="entry">阿琳的新品：黑麦酸面包</p>
+      <p class="entry">林教授在找人一起整理旧书</p>
+    </div>
+  </div>
+    <script>
+       const countdown = document.querySelector('.countdown');
+
+       document.body.addEventListener('click', () => {
+       let days = parseInt(countdown.textContent.replace(/,/g, ''));
+       days = days - 1;
+       countdown.textContent = days.toLocaleString() + ' 天';
+     });
+     </script>
+</body>
+</html>
