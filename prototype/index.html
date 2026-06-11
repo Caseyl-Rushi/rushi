@@ -393,6 +393,48 @@ function drawBookHouse(cx, cy) {
   ctx.textAlign = 'left';
 }
 drawBookHouse(610, 200);
+
+// ========== 8. 画老树 ==========
+// 树干：不画矩形，画一条歪的多边形
+// 树冠：不画多边形，画一堆椭圆叠在一起
+function drawTree(cx, cy) {
+  // --- 树干（等腰梯形，歪一点） ---
+  ctx.fillStyle = '#8b6b4a';
+  ctx.beginPath();
+  ctx.moveTo(cx - 6, cy);           // 树根左
+  ctx.lineTo(cx + 6, cy);           // 树根右
+  ctx.lineTo(cx + 4, cy - 40);      // 树干顶部右（歪！）
+  ctx.lineTo(cx - 3, cy - 45);      // 树干顶部左
+  ctx.closePath();
+  ctx.fill();
+
+  // --- 树冠底层：最大的墨绿椭圆 ---
+  ctx.fillStyle = '#4a6741';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - 55, 30, 22, 0, 0, Math.PI * 2);  // 宽30 高22
+  ctx.fill();
+
+  // --- 树冠中层：稍小的草绿椭圆 ---
+  ctx.fillStyle = '#5a7a4a';
+  ctx.beginPath();
+  ctx.ellipse(cx - 8, cy - 62, 22, 18, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // --- 树冠上层：亮绿小椭圆 ---
+  ctx.fillStyle = '#6a8a5a';
+  ctx.beginPath();
+  ctx.ellipse(cx + 5, cy - 68, 18, 14, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // --- 树冠顶部：一抹嫩绿 ---
+  ctx.fillStyle = '#7a9a6a';
+  ctx.beginPath();
+  ctx.ellipse(cx - 2, cy - 75, 12, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// 放在街区右侧空地上（右下菱形旁边）
+drawTree(700, 290);
 </script>
 </body>
 </html>
