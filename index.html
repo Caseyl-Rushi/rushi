@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>如是</title>
+<style>
+/* ===== 页面背景：天空渐变 ===== */
+body {
+  margin: 0;
+  height: 100vh;
+  background: linear-gradient(#c8d6e5, #f5e6d3);
+  font-family: "SimSun", "宋体", serif;
+  overflow: hidden;
+}
+
+/* ===== 中央文字区域 ===== */
+.balcony {
+  position: fixed;
+  top: 25%;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  color: #3d3d3d;
+  z-index: 5;
+}
+.balcony h1 {
+  font-size: 2rem;
+  font-weight: normal;
+  margin-bottom: 0.5rem;
+}
+.balcony p {
+  font-size: 1rem;
+  color: #7a7a7a;
+  margin: 0.5rem;
+}
+.countdown {
+  font-size: 0.9rem;
+  color: #b8860b;
+  margin-top: 2rem;
+  letter-spacing: 2px;
+}
+
+/* ===== 日程本（右下角）===== */
+.notebook {
+  position: fixed;
+  right: 3rem;
+  bottom: 3rem;
+  width: 220px;
+  background: #faf5eb;
+  border: 1px solid #d4c5b2;
+  padding: 1.2rem;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+  transform: rotate(-2deg);
+  transition: all 0.3s ease;
+  z-index: 20;
+}
+.notebook:hover {
+  transform: rotate(0deg) scale(1.02);
+  box-shadow: 3px 3px 14px rgba(0,0,0,0.15);
+}
+.day-label {
+  font-size: 0.8rem;
+  color: #b8860b;
+  border-bottom: 1px solid #d4c5b2;
+  padding-bottom: 0.3rem;
+  margin-bottom: 0.6rem;
+}
+.entry {
+  font-size: 0.75rem;
+  color: #5a5a5a;
+  line-height: 1.8;
+  margin: 0;
+}
+
+/* ===== 云层（CSS画的，在Canvas后面）===== */
+.cloud-layer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 120px;
+  background: rgba(255,255,255,0.35);
+  border-radius: 60% 70% 0 0;
+  z-index: 10;
+}
+.cloud-layer-2 {
+  position: fixed;
+  bottom: 30px;
+  left: -50px;
+  width: 150%;
+  height: 80px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50% 50% 0 0;
+  z-index: 5;
+  animation: drift 8s ease-in-out infinite;
+}
+@keyframes drift {
+  0%   { transform: translateX(0); }
+  50%  { transform: translateX(30px); }
+  100% { transform: translateX(0); }
+}
+
+/* ===== Canvas：街区画面 ===== */
+canvas {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+}
+</style>
+</head>
+<body>
+
+<!-- 街区画布：宽900 高400 -->
+<canvas id="street" width="900" height="400"></canvas>
+
+<!-- 云层（在画布上面一点）-->
+<div class="cloud-layer"></div>
+<div class="cloud-layer-2"></div>
+
+<!-- 中央文字 -->
+<div class="balcony">
+  <h1>你站在阳台上</h1>
+  <p>远处是云海。云缝里漏出地面都市的暖黄灯光。</p>
+  <p>阳台栏杆上的屏幕安静地亮着</p>
+  <div class="countdown">109,575 天</div>
+</div>
+
+<!-- 日程本 -->
+<div class="notebook">
+  <div class="notebook-page">
+    <p class="day-label">今日</p>
+    <p class="entry">悬赏"西侧空地规划"投票开始</p>
+    <p class="entry">阿琳的新品：黑麦酸面包</p>
+    <p class="entry">林教授在找人一起整理旧书</p>
+  </div>
+</div>
+
+<script>
+// ========== 1. 倒计时点击 ==========
+const countdown = document.querySelector('.countdown');
+document.body.addEventListener('click', () => {
+  let days = parseInt(countdown.textContent.replace(/,/g, ''));
+  days = days - 1;
+  countdown.textContent = days.toLocaleString() + ' 天';
+});
+
+// ========== 2. Canvas 画布设置 ==========
+const canvas = document.getElementById('street');
+const ctx = canvas.getContext('2d');
+
+// 画布宽900 高400
+// 中心点 = (450, 200)
+
+// ========== 3. 画菱形地砖 ==========
+function drawDiamond(cx, cy, w, h) {
+  // cx,cy = 菱形中心坐标
+  // w = 左右宽的一半, h = 上下高的一半
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - h);       // 上顶点
+  ctx.lineTo(cx + w, cy);       // 右顶点
+  ctx.lineTo(cx, cy + h);       // 下顶点
+  ctx.lineTo(cx - w, cy);       // 左顶点
+  ctx.closePath();
+  ctx.fillStyle = '#e8e0d5';     // 淡米色填充
+  ctx.fill();
+  ctx.strokeStyle = '#c4b9a8';   // 边框色
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
+// 地面：4个菱形拼成一个小街区
+//          [上]
+//     [左] [中] [右]
+//          [下]
+drawDiamond(450, 120, 80, 40);   // 上——靠近画面上方
+drawDiamond(290, 200, 80, 40);   // 左
+drawDiamond(610, 200, 80, 40);   // 右
+drawDiamond(450, 280, 80, 40);   // 下——最下面那个，房子盖在这
+
+// ========== 4. 画面包店 ==========
+function drawBakery(cx, cy) {
+  // cx,cy = 这栋房子站在哪个菱形的中心
+  
+  // 正面墙（暖米色矩形）
+  ctx.fillStyle = '#f5ead5';
+  ctx.fillRect(cx - 28, cy - 50, 56, 40);
+
+  // 两扇窗户（橘色暖光）
+  ctx.fillStyle = '#f4a460';
+  ctx.fillRect(cx - 20, cy - 42, 16, 16);   // 左窗
+  ctx.fillRect(cx + 4, cy - 42, 16, 16);    // 右窗
+
+  // 窗格线
+  ctx.strokeStyle = '#5a4030';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(cx - 20, cy - 42, 16, 16);
+  ctx.strokeRect(cx + 4, cy - 42, 16, 16);
+
+  // 右侧墙（稍暗，制造立体感）
+  ctx.fillStyle = '#e8dcc8';
+  ctx.beginPath();
+  ctx.moveTo(cx + 28, cy - 50);
+  ctx.lineTo(cx + 44, cy - 40);
+  ctx.lineTo(cx + 44, cy);
+  ctx.lineTo(cx + 28, cy - 10);
+  ctx.closePath();
+  ctx.fill();
+
+  // 屋顶（深棕色三角形+梯形）
+  ctx.fillStyle = '#8b6914';
+  ctx.beginPath();
+  ctx.moveTo(cx - 32, cy - 50);   // 屋顶左下角
+  ctx.lineTo(cx, cy - 75);        // 屋顶尖顶（比墙面高25px）
+  ctx.lineTo(cx + 48, cy - 40);   // 屋顶右下角
+  ctx.lineTo(cx + 44, cy - 40);   // 接右侧墙
+  ctx.lineTo(cx + 28, cy - 50);   // 接正面墙右上角
+  ctx.closePath();
+  ctx.fill();
+
+  // 门（深棕色）
+  ctx.fillStyle = '#6b4226';
+  ctx.fillRect(cx - 5, cy - 28, 10, 18);
+
+  // 招牌（白色小条）
+  ctx.fillStyle = '#faf5eb';
+  ctx.fillRect(cx - 16, cy - 63, 32, 9);
+  ctx.fillStyle = '#5a4030';
+  ctx.font = '7px SimSun';
+  ctx.fillText('面包店', cx - 13, cy - 56);
+}
+
+// 在最下面的菱形上盖面包店
+drawBakery(450, 280);
+
+// ========== 5. 画茶馆 ==========
+// // cx,cy = 这栋房子站在哪个菱形的中心
+  function drawTeahouse(cx, cy) {
+    
+    ctx.fillStyle='#e8d5c4';
+    ctx.fillRect(cx - 28,cy - 50,56,40);
+
+    ctx.fillStyle='#f5e6a3';
+    ctx.fillRect(cx - 20, cy - 42,16,16);
+    ctx.fillRect(cx + 4,cy - 42,16,16);
+
+  // 窗格线
+    ctx.strokeStyle = '#5a4030';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(cx - 20, cy - 42, 16, 16);   // 左窗框
+    ctx.strokeRect(cx + 4, cy - 42, 16, 16);    // 右窗框
+
+  // 右侧墙（稍暗，制造立体感）
+    ctx.fillStyle = '#d8cbb8';
+    ctx.beginPath();
+    ctx.moveTo(cx + 28, cy - 50);
+    ctx.lineTo(cx + 44, cy - 40);
+    ctx.lineTo(cx + 44, cy);
+    ctx.lineTo(cx + 28, cy - 10);
+    ctx.closePath();
+    ctx.fill();
+
+  // 屋顶（深灰色——茶馆屋顶比面包店深）
+    ctx.fillStyle = '#5a4a3a';
+    ctx.beginPath();
+    ctx.moveTo(cx - 32, cy - 50);   // 屋顶左下角
+    ctx.lineTo(cx, cy - 75);        // 尖顶
+    ctx.lineTo(cx + 48, cy - 40);   // 屋顶右下角
+    ctx.lineTo(cx + 44, cy - 40);   // 接右侧墙
+    ctx.lineTo(cx + 28, cy - 50);   // 接正面墙
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle='#6b4226';
+    ctx.fillRect(cx - 5,cy - 28,10,18);
+
+    ctx.fillStyle='#faf5eb';
+    ctx.fillRect(cx - 16,cy - 63,32,9);
+    ctx.fillStyle ='#5a4030';
+    ctx.font='7px SimSun';
+    ctx.textAlign='center';
+    ctx.fillText('茶楼',cx,cy -56);
+    }
+
+    // 在左侧菱形上盖茶馆
+    drawTeahouse(450, 120);
+
+// ========== 6. 画老张修理铺 ==========
+// 站在左侧菱形 (290, 200)
+function drawRepairShop(cx, cy) {
+  // 正面墙（灰调，修理铺）
+  ctx.fillStyle = '#d5cdc0';
+  ctx.fillRect(cx - 28, cy - 50, 56, 40);
+
+  // 窗户（冷白灯光——工具间）
+  ctx.fillStyle = '#e8e4d8';
+  ctx.fillRect(cx - 20, cy - 42, 16, 16);
+  ctx.fillRect(cx + 4, cy - 42, 16, 16);
+
+  // 窗格线
+  ctx.strokeStyle = '#5a4030';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(cx - 20, cy - 42, 16, 16);
+  ctx.strokeRect(cx + 4, cy - 42, 16, 16);
+
+  // 侧面墙
+  ctx.fillStyle = '#c4bab0';
+  ctx.beginPath();
+  ctx.moveTo(cx + 28, cy - 50);
+  ctx.lineTo(cx + 44, cy - 40);
+  ctx.lineTo(cx + 44, cy);
+  ctx.lineTo(cx + 28, cy - 10);
+  ctx.closePath();
+  ctx.fill();
+
+  // 屋顶（铁灰色）
+  ctx.fillStyle = '#6b6b6b';
+  ctx.beginPath();
+  ctx.moveTo(cx - 32, cy - 50);
+  ctx.lineTo(cx, cy - 75);
+  ctx.lineTo(cx + 48, cy - 40);
+  ctx.lineTo(cx + 44, cy - 40);
+  ctx.lineTo(cx + 28, cy - 50);
+  ctx.closePath();
+  ctx.fill();
+
+  // 门（深铁色）
+  ctx.fillStyle = '#4a4540';
+  ctx.fillRect(cx - 5, cy - 28, 10, 18);
+
+  // 招牌
+  ctx.fillStyle = '#faf5eb';
+  ctx.fillRect(cx - 16, cy - 63, 32, 9);
+  ctx.fillStyle = '#5a4030';
+  ctx.font = '7px SimSun';
+  ctx.textAlign = 'center';
+  ctx.fillText('修理铺', cx, cy - 56);
+  ctx.textAlign = 'left';
+}
+drawRepairShop(290, 200);
+
+// ========== 7. 画林教授书屋 ==========
+// 站在右侧菱形 (610, 200)
+function drawBookHouse(cx, cy) {
+  // 正面墙（书卷暖色）
+  ctx.fillStyle = '#f0e0c8';
+  ctx.fillRect(cx - 28, cy - 50, 56, 40);
+
+  // 窗户（偏紫暖光——深夜读书灯）
+  ctx.fillStyle = '#d4c0a0';
+  ctx.fillRect(cx - 20, cy - 42, 16, 16);
+  ctx.fillRect(cx + 4, cy - 42, 16, 16);
+
+  // 窗格线
+  ctx.strokeStyle = '#5a4030';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(cx - 20, cy - 42, 16, 16);
+  ctx.strokeRect(cx + 4, cy - 42, 16, 16);
+
+  // 侧面墙
+  ctx.fillStyle = '#e0d0b8';
+  ctx.beginPath();
+  ctx.moveTo(cx + 28, cy - 50);
+  ctx.lineTo(cx + 44, cy - 40);
+  ctx.lineTo(cx + 44, cy);
+  ctx.lineTo(cx + 28, cy - 10);
+  ctx.closePath();
+  ctx.fill();
+
+  // 屋顶（深暖棕）
+  ctx.fillStyle = '#6b4d30';
+  ctx.beginPath();
+  ctx.moveTo(cx - 32, cy - 50);
+  ctx.lineTo(cx, cy - 75);
+  ctx.lineTo(cx + 48, cy - 40);
+  ctx.lineTo(cx + 44, cy - 40);
+  ctx.lineTo(cx + 28, cy - 50);
+  ctx.closePath();
+  ctx.fill();
+
+  // 门
+  ctx.fillStyle = '#5a3d28';
+  ctx.fillRect(cx - 5, cy - 28, 10, 18);
+
+  // 招牌
+  ctx.fillStyle = '#faf5eb';
+  ctx.fillRect(cx - 16, cy - 63, 32, 9);
+  ctx.fillStyle = '#5a4030';
+  ctx.font = '7px SimSun';
+  ctx.textAlign = 'center';
+  ctx.fillText('书屋', cx, cy - 56);
+  ctx.textAlign = 'left';
+}
+drawBookHouse(610, 200);
+
+// ========== 8. 画老树 ==========
+// 树干：不画矩形，画一条歪的多边形
+// 树冠：不画多边形，画一堆椭圆叠在一起
+function drawTree(cx, cy) {
+  // --- 树干（等腰梯形，歪一点） ---
+  ctx.fillStyle = '#8b6b4a';
+  ctx.beginPath();
+  ctx.moveTo(cx - 6, cy);           // 树根左
+  ctx.lineTo(cx + 6, cy);           // 树根右
+  ctx.lineTo(cx + 4, cy - 40);      // 树干顶部右（歪！）
+  ctx.lineTo(cx - 3, cy - 45);      // 树干顶部左
+  ctx.closePath();
+  ctx.fill();
+
+  // --- 树冠底层：最大的墨绿椭圆 ---
+  ctx.fillStyle = '#4a6741';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - 55, 30, 22, 0, 0, Math.PI * 2);  // 宽30 高22
+  ctx.fill();
+
+  // --- 树冠中层：稍小的草绿椭圆 ---
+  ctx.fillStyle = '#5a7a4a';
+  ctx.beginPath();
+  ctx.ellipse(cx - 8, cy - 62, 22, 18, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // --- 树冠上层：亮绿小椭圆 ---
+  ctx.fillStyle = '#6a8a5a';
+  ctx.beginPath();
+  ctx.ellipse(cx + 5, cy - 68, 18, 14, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // --- 树冠顶部：一抹嫩绿 ---
+  ctx.fillStyle = '#7a9a6a';
+  ctx.beginPath();
+  ctx.ellipse(cx - 2, cy - 75, 12, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// 放在街区右侧空地上（右下菱形旁边）
+drawTree(700, 290);
+</script>
+</body>
+</html>
